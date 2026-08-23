@@ -1,0 +1,50 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply font-body text-ink-900 bg-bg antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  @apply font-display text-navy-900;
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: theme("colors.teal.100");
+  color: theme("colors.navy.900");
+}
+
+:focus-visible {
+  outline: 3px solid theme("colors.teal.500");
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom switch used across the wizard (Tailwind alone can't easily do the
+   sliding-knob toggle without a plugin, so a small hand-rolled component
+   class lives here). */
+.switch-track {
+  @apply relative inline-flex h-6 w-[42px] flex-shrink-0 items-center rounded-full border-[1.5px] border-border bg-surface-sunken transition-colors;
+}
+.switch-track[data-checked="true"] {
+  @apply bg-teal-600 border-teal-600;
+}
+.switch-knob {
+  @apply absolute left-[3px] top-[2.5px] h-4 w-4 rounded-full bg-white shadow transition-transform;
+}
+.switch-track[data-checked="true"] .switch-knob {
+  transform: translateX(18px);
+}
