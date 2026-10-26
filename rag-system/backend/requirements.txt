@@ -1,0 +1,28 @@
+# Web framework / API
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+
+# HTTP + extraction
+requests>=2.31
+beautifulsoup4>=4.12
+lxml>=5.1
+pypdf>=4.0
+# PyMuPDF>=1.24        # optional: faster/more robust PDF extraction; used automatically if installed
+
+# Data / embeddings
+numpy>=1.26
+scikit-learn>=1.4       # default offline TF-IDF+SVD embedding provider
+# sentence-transformers>=2.6   # optional: enable EMBEDDING_PROVIDER=sentence_transformers
+
+# Vector store
+# faiss-cpu>=1.8        # optional: enable VECTOR_STORE_BACKEND=faiss (numpy backend is the zero-install default)
+
+# Metadata DB (optional -- default backend is stdlib sqlite3, no install needed)
+# pymongo>=4.6          # enable DB_BACKEND=mongodb
+
+python-dotenv>=1.0
+
+# Testing
+pytest>=8.0
+pytest-cov>=5.0
