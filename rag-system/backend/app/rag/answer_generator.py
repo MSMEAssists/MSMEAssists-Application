@@ -50,6 +50,19 @@ class Citation:
     document_id: str
     chunk_id: str
     official_application_url: Optional[str] = None
+    application_portal_url: Optional[str] = None
+    scheme_details_url: Optional[str] = None
+    verification_status: Optional[str] = None
+
+    def __post_init__(self):
+        if self.application_portal_url and not self.official_application_url:
+            self.official_application_url = self.application_portal_url
+        elif self.official_application_url and not self.application_portal_url:
+            self.application_portal_url = self.official_application_url
+        if not self.scheme_details_url:
+            self.scheme_details_url = self.official_url
+        if not self.verification_status:
+            self.verification_status = "verified" if self.official_application_url else "unverified"
 
 
 @dataclass
@@ -101,6 +114,9 @@ def generate_answer(
             document_id=r.document_id,
             chunk_id=r.chunk_id,
             official_application_url=getattr(r, "official_application_url", None),
+            application_portal_url=getattr(r, "application_portal_url", getattr(r, "official_application_url", None)),
+            scheme_details_url=getattr(r, "scheme_details_url", r.official_url),
+            verification_status=getattr(r, "verification_status", "verified" if getattr(r, "official_application_url", None) else "unverified"),
         )
         for r in effective_results
     ]
@@ -236,11 +252,21 @@ def _synthesize_grounded_answer(query: str, results: List[RetrievedResult]) -> s
         lines.append("")
 
     # Process and Portal
-    portal_url = top.official_application_url or top.official_url
+    app_portal = top.official_application_url or getattr(top, "application_portal_url", None)
+    scheme_details = getattr(top, "scheme_details_url", None) or top.official_url
+
     lines.extend([
         "#### Application Procedure & Official Links:",
-        f"- **Official Portal:** [{scheme_title}]({portal_url})" + (f" *(Page {top.page_number})*" if top.page_number else ""),
     ])
+    if app_portal:
+        lines.append(f"- **Direct Application Portal:** [Apply for {scheme_title}]({app_portal})")
+        if scheme_details and scheme_details != app_portal:
+            lines.append(f"- **Official Guidelines & Scheme Details:** [{scheme_title} Documentation]({scheme_details})" + (f" *(Page {top.page_number})*" if top.page_number else ""))
+    else:
+        if scheme_details:
+            lines.append(f"- **Official Scheme Information Page:** [{scheme_title} Details & Guidelines]({scheme_details})" + (f" *(Page {top.page_number})*" if top.page_number else ""))
+        lines.append("- **Direct Application Portal:** Direct online application portal could not be verified for this scheme (applications may be routed offline through Member Lending Institutions / commercial banks or local District Industries Centres).")
+
     for p in process_facts[:2]:
         lines.append(f"- {p}")
 

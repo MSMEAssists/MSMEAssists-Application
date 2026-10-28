@@ -17,6 +17,19 @@ class LocalDocumentMetadata:
     provenance_webpage_url: Optional[str] = None
     notes: Optional[str] = None
     official_application_url: Optional[str] = None
+    application_portal_url: Optional[str] = None
+    scheme_details_url: Optional[str] = None
+    verification_status: Optional[str] = None
+
+    def __post_init__(self):
+        if self.application_portal_url and not self.official_application_url:
+            self.official_application_url = self.application_portal_url
+        elif self.official_application_url and not self.application_portal_url:
+            self.application_portal_url = self.official_application_url
+        if not self.scheme_details_url:
+            self.scheme_details_url = self.provenance_webpage_url or self.official_url
+        if not self.verification_status:
+            self.verification_status = "verified_online_portal" if self.official_application_url else "informational_only"
 
 
 LOCAL_PDF_REGISTRY: Dict[str, LocalDocumentMetadata] = {
@@ -82,7 +95,10 @@ LOCAL_PDF_REGISTRY: Dict[str, LocalDocumentMetadata] = {
         is_verified_direct_pdf_url=True,
         provenance_webpage_url="https://www.msme.gov.in/offerings/schemes-and-services",
         notes="Official PMEGP scheme. Subsidy: up to 35% special categories, 25% general.",
-        official_application_url="https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+        official_application_url="https://pmegp.msme.gov.in/Home/Homepage",
+        application_portal_url="https://pmegp.msme.gov.in/Home/Homepage",
+        scheme_details_url="https://www.msme.gov.in/offerings/schemes-and-services",
+        verification_status="verified_online_portal",
     ),
 
     # 6. PMS  [VERIFIED OK]

@@ -82,9 +82,10 @@ class TfidfSvdEmbeddingProvider(BaseEmbeddingProvider):
             try:
                 with open(self._model_path, "rb") as f:
                     saved = pickle.load(f)
-                    self._vectorizer = saved["vectorizer"]
-                    self._svd = saved["svd"]
-                    self._fitted = True
+                    if saved.get("svd") and saved["svd"].n_components == min(dimensions, 256):
+                        self._vectorizer = saved["vectorizer"]
+                        self._svd = saved["svd"]
+                        self._fitted = True
             except Exception:
                 pass
 

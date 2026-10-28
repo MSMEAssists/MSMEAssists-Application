@@ -207,7 +207,7 @@ export default function SchemeCard({ scheme, onCheckCompliance }) {
           )}
           {scheme.official_url && (
             <a
-              href={cleanPortalUrl(scheme.official_url)}
+              href={cleanPortalUrl(scheme.scheme_details_url || scheme.official_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-teal-700 hover:underline"
@@ -217,7 +217,9 @@ export default function SchemeCard({ scheme, onCheckCompliance }) {
             </a>
           )}
           {(() => {
-            const directAppUrl = validateDirectApplicationUrl(scheme.official_application_url);
+            const directAppUrl = validateDirectApplicationUrl(
+              scheme.official_application_url || scheme.application_portal_url
+            );
             if (directAppUrl) {
               return (
                 <a
@@ -230,12 +232,22 @@ export default function SchemeCard({ scheme, onCheckCompliance }) {
                 </a>
               );
             }
+            if (scheme.verification_status === "verified_offline") {
+              return (
+                <span
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 italic"
+                  title="Applications are submitted through Member Lending Institutions / commercial banks (no direct online portal)"
+                >
+                  Bank / Offline Application
+                </span>
+              );
+            }
             return (
               <span
                 className="inline-flex items-center gap-1 text-xs text-slate-400 italic"
-                title="This scheme does not provide a direct online application portal (may require offline bank application or departmental submission)"
+                title="Direct online application link could not be verified"
               >
-                Direct application link unavailable
+                Direct application link unverified
               </span>
             );
           })()}

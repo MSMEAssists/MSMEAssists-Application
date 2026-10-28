@@ -30,6 +30,10 @@ class SchemeCitationOut(BaseModel):
     page_number: Optional[int] = None
     document_id: Optional[str] = None
     chunk_id: Optional[str] = None
+    official_application_url: Optional[str] = None
+    application_portal_url: Optional[str] = None
+    scheme_details_url: Optional[str] = None
+    verification_status: Optional[str] = None
 
 
 class DiscoveredSchemeOut(BaseModel):
@@ -39,6 +43,9 @@ class DiscoveredSchemeOut(BaseModel):
     organization: str
     official_url: str
     official_application_url: Optional[str] = None
+    application_portal_url: Optional[str] = None
+    scheme_details_url: Optional[str] = None
+    verification_status: Optional[str] = None
     page_number: Optional[int] = None
     description: Optional[str] = None
     snippet: Optional[str] = None

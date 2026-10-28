@@ -37,6 +37,12 @@ const DEDICATED_PORTAL_HOSTS = new Set([
   "samadhaan.msme.gov.in",
   "gem.gov.in",
   "etenders.gov.in",
+  "pmegp.msme.gov.in",
+  "zed.msme.gov.in",
+  "standupmitra.in",
+  "www.standupmitra.in",
+  "kviconline.gov.in",
+  "www.kviconline.gov.in",
 ]);
 
 /**
@@ -135,24 +141,15 @@ export function validateDirectApplicationUrl(rawUrl) {
  */
 export function cleanPortalUrl(rawUrl) {
   if (!rawUrl || typeof rawUrl !== "string") {
-    return "https://www.msme.gov.in/";
+    return "";
   }
 
   const trimmed = rawUrl.trim();
   if (!trimmed) {
-    return "https://www.msme.gov.in/";
+    return "";
   }
 
-  // If URL is not a PDF, return it directly
-  if (!trimmed.toLowerCase().includes(".pdf")) {
-    return trimmed;
-  }
-
-  // If PDF, strip to base web URL
-  try {
-    const parsed = new URL(trimmed);
-    return `${parsed.protocol}//${parsed.host}`;
-  } catch {
-    return trimmed.replace(/\/[^/]+\.pdf.*$/i, "");
-  }
+  // Preserve official scheme guidelines / documents verbatim;
+  // do NOT strip scheme-specific pages or PDFs to generic domain root.
+  return trimmed;
 }

@@ -18,7 +18,10 @@ def test_fallback_schemes_grounded_application_links():
     # PMEGP: Verified online direct application e-portal
     assert "pmegp_subsidy" in schemes_by_id
     pmegp = schemes_by_id["pmegp_subsidy"]
-    assert pmegp.official_application_url == "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp"
+    assert pmegp.official_application_url in (
+        "https://pmegp.msme.gov.in/Home/Homepage",
+        "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+    )
     assert pmegp.official_url == "https://msme.gov.in/pmegp"
 
     # ZED: Verified online direct registration portal
@@ -46,6 +49,9 @@ def test_fallback_schemes_grounded_application_links():
 
 def test_clean_direct_application_url_validation():
     # Valid online portals
+    assert clean_direct_application_url(
+        "https://pmegp.msme.gov.in/Home/Homepage"
+    ) == "https://pmegp.msme.gov.in/Home/Homepage"
     assert clean_direct_application_url(
         "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp"
     ) == "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp"

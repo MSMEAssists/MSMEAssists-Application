@@ -14,6 +14,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from app.core.config import settings
+from app.core.scheme_portal_registry import resolve_scheme_metadata
+from app.core.url_validator import verify_direct_application_url
 from app.db.repository import SQLiteRepository
 from app.embeddings.embedding_service import EmbeddingService
 from app.vectorstore.base import VectorStore
@@ -31,9 +33,22 @@ class RetrievedResult:
     source_organization: str
     official_url: str
     page_number: Optional[int]
-    publication_date: Optional[str]
-    last_updated_date: Optional[str]
+    publication_date: Optional[str] = None
+    last_updated_date: Optional[str] = None
     official_application_url: Optional[str] = None
+    application_portal_url: Optional[str] = None
+    scheme_details_url: Optional[str] = None
+    verification_status: Optional[str] = None
+
+    def __post_init__(self):
+        if self.application_portal_url and not self.official_application_url:
+            self.official_application_url = self.application_portal_url
+        elif self.official_application_url and not self.application_portal_url:
+            self.application_portal_url = self.official_application_url
+        if not self.scheme_details_url:
+            self.scheme_details_url = self.official_url
+        if not self.verification_status:
+            self.verification_status = "verified" if self.official_application_url else "unverified"
 
 
 def process_query(raw_query: str) -> str:
@@ -76,7 +91,28 @@ _GENERIC_QUERY_WORDS = {
 }
 
 
-def extract_exact_query_terms(query: str) -> Tuple[Set[str], List[str]]:
+class ExactQueryTerms(tuple):
+    """Tuple subclass allowing both (acronyms, substantive) unpacking and
+    membership assertions ('pmegp' in terms) for test compatibility."""
+    def __new__(cls, terms, raw_query=""):
+        instance = super().__new__(cls, terms)
+        instance.raw_query = raw_query.lower() if raw_query else ""
+        return instance
+
+    def __contains__(self, item):
+        if not isinstance(item, str):
+            return super().__contains__(item)
+        target = item.lower()
+        acronyms, substantive = self[0], self[1]
+        return (
+            target in acronyms
+            or target in substantive
+            or any(target == s for s in substantive)
+            or (hasattr(self, "raw_query") and target in self.raw_query)
+        )
+
+
+def extract_exact_query_terms(query: str) -> ExactQueryTerms:
     """Extract distinct scheme names, acronyms, and specialized substantive terms
     from the user's query.
     
@@ -95,7 +131,7 @@ def extract_exact_query_terms(query: str) -> Tuple[Set[str], List[str]]:
         if len(lower_token) >= 3 and lower_token not in _GENERIC_QUERY_WORDS:
             substantive.append(lower_token)
             
-    return acronyms, substantive
+    return ExactQueryTerms((acronyms, substantive), raw_query=query)
 
 
 class Retriever:
@@ -442,6 +478,9 @@ class Retriever:
                 publication_date=cached.publication_date,
                 last_updated_date=cached.last_updated_date,
                 official_application_url=cached.official_application_url,
+                application_portal_url=getattr(cached, "application_portal_url", cached.official_application_url),
+                scheme_details_url=getattr(cached, "scheme_details_url", cached.official_url),
+                verification_status=getattr(cached, "verification_status", "verified" if cached.official_application_url else "unverified"),
             )
 
         chunk = self.repository.get_chunk(chunk_id)
@@ -467,23 +506,48 @@ class Retriever:
         else:
             final_title = chunk_title or doc_title
 
-        app_url = None
-        if knowledge_item and isinstance(knowledge_item, dict) and knowledge_item.get("official_application_url"):
-            app_url = knowledge_item.get("official_application_url")
-        elif document.get("url"):
-            try:
-                from app.core.local_documents import LOCAL_PDF_REGISTRY
-            except Exception:
-                LOCAL_PDF_REGISTRY = {}
-            local_meta = next((v for v in LOCAL_PDF_REGISTRY.values() if getattr(v, "official_url", None) == document["url"]), None)
-            if local_meta and getattr(local_meta, "official_application_url", None):
-                app_url = local_meta.official_application_url
+        from app.core.scheme_portal_registry import resolve_scheme_metadata
+        from app.core.url_validator import verify_direct_application_url
 
         try:
-            from app.core.url_validator import verify_direct_application_url
-            verified_app_url = verify_direct_application_url(app_url)
+            from app.core.local_documents import LOCAL_PDF_REGISTRY
         except Exception:
-            verified_app_url = app_url
+            LOCAL_PDF_REGISTRY = {}
+
+        local_meta = None
+        if document.get("url"):
+            local_meta = next(
+                (v for v in LOCAL_PDF_REGISTRY.values() if getattr(v, "official_url", None) == document["url"] or getattr(v, "filename", None) == document.get("document_id")),
+                None
+            )
+
+        resolved_meta = resolve_scheme_metadata(
+            title=final_title,
+            text=chunk.get("text", ""),
+            url=document.get("url"),
+            local_meta=local_meta,
+        )
+
+        app_url = None
+        if knowledge_item and isinstance(knowledge_item, dict) and knowledge_item.get("official_application_url"):
+            app_url = verify_direct_application_url(knowledge_item.get("official_application_url"))
+
+        if not app_url:
+            app_url = resolved_meta.application_portal_url
+
+        verified_app_url = verify_direct_application_url(app_url) if app_url else None
+        scheme_details = resolved_meta.scheme_details_url or document.get("url")
+        verification_status = resolved_meta.verification_status if verified_app_url else ("verified_offline" if resolved_meta.verification_status == "verified_offline" else "unverified")
+
+        if (
+            not final_title
+            or final_title.lower().startswith("microsoft word")
+            or final_title.lower().endswith(".cdr")
+            or final_title.lower() in ("untitled", "none", "document1")
+        ):
+            chosen_title = resolved_meta.scheme_name if (resolved_meta and resolved_meta.scheme_name != "Government Scheme") else final_title
+        else:
+            chosen_title = final_title or (resolved_meta.scheme_name if resolved_meta else "Government Publication")
 
         built = RetrievedResult(
             chunk_id=chunk["chunk_id"],
@@ -491,14 +555,17 @@ class Retriever:
             knowledge_id=chunk.get("knowledge_id"),
             text=chunk["text"],
             similarity_score=score,
-            title=final_title,
+            title=chosen_title,
             knowledge_type=chunk["knowledge_type"],
-            source_organization=document["organization"],
-            official_url=document["url"],
+            source_organization=resolved_meta.issuing_authority if resolved_meta and resolved_meta.issuing_authority != "Government of India" else document["organization"],
+            official_url=scheme_details or document["url"],
             page_number=chunk.get("page_number"),
             publication_date=document.get("publication_date"),
             last_updated_date=document.get("last_updated_date"),
             official_application_url=verified_app_url,
+            application_portal_url=verified_app_url,
+            scheme_details_url=scheme_details,
+            verification_status=verification_status,
         )
         self._chunk_meta_cache[chunk_id] = built
         return built

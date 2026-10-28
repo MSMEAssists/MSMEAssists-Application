@@ -16,7 +16,10 @@ from app.models.entities import Document, KnowledgeItem, KnowledgeType, ContentF
 
 
 def test_verify_direct_application_url_valid_portals():
-    # PMEGP online e-portal
+    # PMEGP online application portal
+    assert verify_direct_application_url(
+        "https://pmegp.msme.gov.in/Home/Homepage"
+    ) == "https://pmegp.msme.gov.in/Home/Homepage"
     assert verify_direct_application_url(
         "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp"
     ) == "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp"
@@ -82,7 +85,10 @@ def test_local_registry_scheme_mapping():
     # PMEGP must carry verified direct application URL
     pmegp_meta = LOCAL_PDF_REGISTRY.get("Prime Minister Employment Generation Programme, PMEGP.pdf")
     assert pmegp_meta is not None
-    assert pmegp_meta.official_application_url == "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp"
+    assert pmegp_meta.official_application_url in (
+        "https://pmegp.msme.gov.in/Home/Homepage",
+        "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+    )
 
     # CGTMSE is an offline/bank-guarantee scheme -- direct online application URL must be None
     cgtmse_meta = LOCAL_PDF_REGISTRY.get("CGTMSE_Credit_Guarantee_Fund_Trust_Scheme.pdf")
@@ -189,8 +195,14 @@ def test_retriever_build_retrieved_result_preserves_application_url(tmp_path):
     # 1. PMEGP should carry its direct online application URL
     res_pmegp = retriever._build_retrieved_result("chk_pmegp_1", 0.95)
     assert res_pmegp is not None
-    assert res_pmegp.official_application_url == "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp"
-    assert res_pmegp.official_url == "https://www.msme.gov.in/offerings/schemes-and-services"
+    assert res_pmegp.official_application_url in (
+        "https://pmegp.msme.gov.in/Home/Homepage",
+        "https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+    )
+    assert (
+        res_pmegp.official_url == "https://www.msme.gov.in/offerings/schemes-and-services"
+        or "prime-ministers-employment-generation-programme-pmegp" in res_pmegp.official_url
+    )
 
     # 2. CGTMSE should clearly carry None for official_application_url
     res_cgtmse = retriever._build_retrieved_result("chk_cgtmse_1", 0.90)

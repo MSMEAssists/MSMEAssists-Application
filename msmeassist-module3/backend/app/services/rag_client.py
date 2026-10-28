@@ -67,6 +67,11 @@ def clean_direct_application_url(url: Optional[str]) -> Optional[str]:
             "odr.msme.gov.in",
             "samadhaan.msme.gov.in",
             "gem.gov.in",
+            "pmegp.msme.gov.in",
+            "zed.msme.gov.in",
+            "standupmitra.in",
+            "kviconline.gov.in",
+            "www.kviconline.gov.in",
         }
         if host not in dedicated:
             return None
@@ -81,7 +86,7 @@ FALLBACK_SCHEMES: List[CandidateScheme] = [
         title="Prime Minister Employment Generation Programme (PMEGP)",
         organization="Ministry of MSME / KVIC",
         official_url="https://msme.gov.in/pmegp",
-        official_application_url="https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp",
+        official_application_url="https://pmegp.msme.gov.in/Home/Homepage",
         knowledge_type="SUBSIDY",
         snippet="Credit-linked subsidy scheme offering 15% to 35% margin money subsidy on project costs up to Rs 50 lakh for manufacturing and Rs 20 lakh for services.",
         benefits=[

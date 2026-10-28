@@ -13,7 +13,7 @@ import {
 import schemesService from "../../services/schemesService";
 import { useLanguage } from "../../context/LanguageContext";
 import SafeMarkdownRenderer from "./SafeMarkdownRenderer";
-import { cleanPortalUrl } from "../../utils/urlSanitizer";
+import { cleanPortalUrl, validateDirectApplicationUrl } from "../../utils/urlSanitizer";
 
 const SUGGESTIONS_EN = [
   "Which schemes are open for my business type?",
@@ -301,16 +301,36 @@ export default function FloatingChatAssistant() {
                                   </span>
                                 )}
                               </div>
-                              {c.official_url && (
-                                <a
-                                  href={cleanPortalUrl(c.official_url)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-burnt-orange font-semibold hover:underline inline-flex items-center gap-0.5 shrink-0 ml-2 bg-white px-2 py-1 rounded border border-border text-[10px]"
-                                >
-                                  <span>Portal</span> <FiExternalLink size={10} />
-                                </a>
-                              )}
+                              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                {(() => {
+                                  const appUrl = validateDirectApplicationUrl(c.official_application_url || c.application_portal_url);
+                                  if (appUrl) {
+                                    return (
+                                      <a
+                                        href={appUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-white font-semibold hover:bg-emerald-700 inline-flex items-center gap-1 bg-emerald-600 px-2 py-1 rounded text-[10px] shadow-xs"
+                                        title={`Apply directly on official portal: ${appUrl}`}
+                                      >
+                                        <span>Apply</span> <FiExternalLink size={10} />
+                                      </a>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                                {(c.scheme_details_url || c.official_url) && (
+                                  <a
+                                    href={cleanPortalUrl(c.scheme_details_url || c.official_url)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-burnt-orange font-semibold hover:underline inline-flex items-center gap-0.5 bg-white px-2 py-1 rounded border border-border text-[10px]"
+                                    title="Official guidelines and scheme information"
+                                  >
+                                    <span>Guidelines</span> <FiExternalLink size={10} />
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>

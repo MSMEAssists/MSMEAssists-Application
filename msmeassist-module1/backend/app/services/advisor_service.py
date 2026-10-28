@@ -697,14 +697,22 @@ class AdvisorService:
 
         citations = [
             SchemeCitationOut(
-                title="CGTMSE Official Portal",
+                title="CGTMSE Official Information",
                 organization="Ministry of MSME & SIDBI",
                 official_url="https://www.cgtmse.in",
+                official_application_url=None,
+                application_portal_url=None,
+                scheme_details_url="https://www.cgtmse.in",
+                verification_status="verified_offline",
             ),
             SchemeCitationOut(
                 title="PMEGP Application Portal",
                 organization="KVIC / Ministry of MSME",
-                official_url="https://www.kviconline.gov.in/pmegp/",
+                official_url="https://pmegp.msme.gov.in/Home/Homepage",
+                official_application_url="https://pmegp.msme.gov.in/Home/Homepage",
+                application_portal_url="https://pmegp.msme.gov.in/Home/Homepage",
+                scheme_details_url="https://www.msme.gov.in/offerings/schemes-and-services",
+                verification_status="verified",
             ),
         ]
 
@@ -829,6 +837,10 @@ class AdvisorService:
                 page_number=c.get("page_number"),
                 document_id=c.get("document_id"),
                 chunk_id=c.get("chunk_id"),
+                official_application_url=c.get("official_application_url") or c.get("application_portal_url"),
+                application_portal_url=c.get("application_portal_url") or c.get("official_application_url"),
+                scheme_details_url=c.get("scheme_details_url") or c.get("official_url"),
+                verification_status=c.get("verification_status"),
             )
             for c in citations_data
         ]

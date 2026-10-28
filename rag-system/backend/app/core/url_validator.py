@@ -337,6 +337,10 @@ def verify_direct_application_url(
             "odr.msme.gov.in",
             "samadhaan.msme.gov.in",
             "gem.gov.in",
+            "pmegp.msme.gov.in",
+            "zed.msme.gov.in",
+            "kviconline.gov.in",
+            "www.kviconline.gov.in",
         }
         if hostname not in dedicated_portal_hosts:
             return None

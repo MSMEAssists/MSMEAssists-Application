@@ -4,6 +4,7 @@ import schemesService from "../../services/schemesService";
 import Button from "../ui/Button";
 import { Spinner } from "../ui/Spinner";
 import SafeMarkdownRenderer from "../chat/SafeMarkdownRenderer";
+import { cleanPortalUrl, validateDirectApplicationUrl } from "../../utils/urlSanitizer";
 
 const SUGGESTIONS = [
   "What are the eligibility requirements for PMEGP?",
@@ -166,16 +167,53 @@ export default function RagAssistantWidget() {
                         )}
                       </div>
                     </div>
-                    {citation.official_url && (
-                      <a
-                        href={citation.official_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-teal-600 hover:text-teal-700 hover:underline"
-                      >
-                        Official Source <FiExternalLink size={12} />
-                      </a>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {(() => {
+                        const appUrl = validateDirectApplicationUrl(
+                          citation.official_application_url || citation.application_portal_url
+                        );
+                        if (appUrl) {
+                          return (
+                            <a
+                              href={appUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-700"
+                            >
+                              Apply Online <FiExternalLink size={12} />
+                            </a>
+                          );
+                        }
+                        if (citation.verification_status === "verified_offline") {
+                          return (
+                            <span
+                              className="text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 italic"
+                              title="Applications are submitted offline through Member Lending Institutions / commercial banks"
+                            >
+                              Bank / Offline Application
+                            </span>
+                          );
+                        }
+                        return (
+                          <span
+                            className="text-[11px] text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 italic"
+                            title="Direct online application link could not be verified"
+                          >
+                            Online portal unverified
+                          </span>
+                        );
+                      })()}
+                      {(citation.scheme_details_url || citation.official_url) && (
+                        <a
+                          href={cleanPortalUrl(citation.scheme_details_url || citation.official_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded border border-border bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-teal-700 hover:underline"
+                        >
+                          Official Guidelines <FiExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

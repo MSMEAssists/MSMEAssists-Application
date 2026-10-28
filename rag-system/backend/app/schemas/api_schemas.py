@@ -50,6 +50,9 @@ class KnowledgeItemOut(BaseModel):
     original_source_url: str
     source_organization: str
     official_application_url: Optional[str] = None
+    application_portal_url: Optional[str] = None
+    scheme_details_url: Optional[str] = None
+    verification_status: Optional[str] = None
     publication_date: Optional[str] = None
     last_updated_date: Optional[str] = None
     description: Optional[str] = None
@@ -115,6 +118,9 @@ class RetrievedResultOut(BaseModel):
     publication_date: Optional[str]
     last_updated_date: Optional[str]
     official_application_url: Optional[str] = None
+    application_portal_url: Optional[str] = None
+    scheme_details_url: Optional[str] = None
+    verification_status: Optional[str] = None
 
 
 class RagQueryIn(BaseModel):
@@ -133,6 +139,9 @@ class CitationOut(BaseModel):
     document_id: str
     chunk_id: str
     official_application_url: Optional[str] = None
+    application_portal_url: Optional[str] = None
+    scheme_details_url: Optional[str] = None
+    verification_status: Optional[str] = None
 
 
 class RagAnswerOut(BaseModel):
